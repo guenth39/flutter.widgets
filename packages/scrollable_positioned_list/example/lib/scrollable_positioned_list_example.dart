@@ -59,6 +59,9 @@ class _ScrollablePositionedListPageState
         numberOfItems,
         (int _) =>
             Color(colorGenerator.nextInt(pow(2, 32) - 1)).withOpacity(1));
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      itemScrollController.scrollTo(index: 20, duration: Duration(seconds: 2));
+    });
   }
 
   @override
@@ -70,16 +73,19 @@ class _ScrollablePositionedListPageState
                 child: list(orientation),
               ),
               positionsView,
-              Row(
-                children: <Widget>[
-                  Column(
-                    children: <Widget>[
-                      scrollControlButtons,
-                      jumpControlButtons,
-                      alignmentControl,
-                    ],
-                  ),
-                ],
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: <Widget>[
+                    Column(
+                      children: <Widget>[
+                        scrollControlButtons,
+                        jumpControlButtons,
+                        alignmentControl,
+                      ],
+                    ),
+                  ],
+                ),
               )
             ],
           ),
@@ -100,15 +106,30 @@ class _ScrollablePositionedListPageState
         ],
       );
 
-  Widget list(Orientation orientation) => ScrollablePositionedList.builder(
-        itemCount: numberOfItems,
-        itemBuilder: (context, index) => item(index, orientation),
-        itemScrollController: itemScrollController,
-        itemPositionsListener: itemPositionsListener,
-        reverse: reversed,
-        scrollDirection: orientation == Orientation.portrait
-            ? Axis.vertical
-            : Axis.horizontal,
+  Future get data async {
+    await Future.delayed(Duration(seconds: 1));
+    return true;
+  }
+
+  Widget list(Orientation orientation) => FutureBuilder(
+        future: data,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return ScrollablePositionedList.builder(
+              itemCount: numberOfItems,
+              itemBuilder: (context, index) => item(index, orientation),
+              itemScrollController: itemScrollController,
+              itemPositionsListener: itemPositionsListener,
+              reverse: reversed,
+              scrollDirection: orientation == Orientation.portrait
+                  ? Axis.vertical
+                  : Axis.horizontal,
+            );
+          }
+          return Center(
+            child: CircularProgressIndicator(),
+          );
+        },
       );
 
   Widget get positionsView => ValueListenableBuilder<Iterable<ItemPosition>>(
